@@ -5,13 +5,14 @@ using namespace std;
 
 //The file where the tasks will be stored. You can change the name:
 const string ToDoFile = "db.txt";
+const string temp = "temp.txt";
 
 struct Task{
     string task;
-    bool Process;
+    bool Progress;
 
     Task(){
-        Process = false;
+        Progress = false;
     }
 };
 
@@ -26,6 +27,40 @@ bool compare(string str1, string str2, int start = 0){
     return true;
 }
 
+void AddTask(Task &task){
+    fstream file(ToDoFile, ios::app);
+    if(!file.is_open()){
+        cout << "ERROR!";
+        return;
+    }
+    if(task.Progress){
+        file << task.task << " Completed";
+        file << endl;
+    }
+    else{
+        file << task.task << " Not done";
+        file << endl;
+    }
+
+    file.close();
+}
+
+//not finished
+void Remove(int line = 0){
+    if(line == 0){
+        ofstream file(ToDoFile);
+        if(!file.is_open()){
+            cout << "ERROR!";
+            return;
+        }
+        file.close();
+    }
+    else if(line > 0){
+        line = line - 1;
+
+    }
+}
+
 void App(){
     string input;
 
@@ -33,49 +68,48 @@ void App(){
         cout << "# ";
         getline(cin, input);
 
-        //cannot use substr, find another way
+        if(input == "help" || input == "h"){
+            cout << "  > add - adds a task -> add -c [task]";
+            cout << endl << "    -c - the task is completed";
+            cout << endl << "  > remove - removes a task";
+            cout << endl << "    . - removes everything";
+            cout << endl << "    -n - the line number";
+            cout << endl << "  > exit - closes the program" << endl;
+        }
+        //exit
         if(compare(input, "exit")){
             return;
         }
+
+        //add
         else if(compare(input, "add")){
             //add -c This is a task.
             cout << input.length() << endl;
             string tsk;
             if(compare(input, "-c", 4)){
                 Task task;
-                task.Process = true;
+                task.Progress = true;
                 task.task = input.substr(6, input.length());
                 AddTask(task);
             }
             else{
-                cout << ":<" << endl;
+                Task task;
+                task.task = input.substr(4, input.length());
+                AddTask(task);
             }
         }
+
+        //remove - not completed
+        else if(compare(input, "remove ")){
+            if(compare(input, ".", 7)){
+                Remove();
+            }
+        }
+
+
     }
 }
 
-
-void AddTask(Task &task){
-
-    fstream file(ToDoFile, ios::in);
-    if(!file.is_open()){
-        cout << "ERROR!";
-        return;
-    }
-
-    
-
-    file.close();
-    fstream file(ToDoFile, ios::app);
-    if(!file.is_open()){
-        cout << "ERROR!";
-        return;
-    }
-
-
-
-    file.close();
-}
 
 int main(){
     cout << "Hello!" << endl;
