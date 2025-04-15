@@ -47,6 +47,7 @@ void AddTask(Task &task){
 
 //not finished
 void Remove(int line = 0){
+    //rm everything
     if(line == 0){
         ofstream file(ToDoFile);
         if(!file.is_open()){
@@ -55,9 +56,22 @@ void Remove(int line = 0){
         }
         file.close();
     }
+    //rm specific line
     else if(line > 0){
         line = line - 1;
+        ifstream file1(ToDoFile);
+        ofstream tempf(temp);
+        string linestr;
+        int curline = 0;
 
+        while(getline(file1, linestr)){
+            if(line != curline){
+                tempf << linestr << endl;
+            }
+            curline++;
+        }
+        file1.close();
+        tempf.close();
     }
 }
 
@@ -89,7 +103,7 @@ void App(){
             if(compare(input, "-c", 4)){
                 Task task;
                 task.Progress = true;
-                task.task = input.substr(6, input.length());
+                task.task = input.substr(7, input.length());
                 AddTask(task);
             }
             else{
@@ -103,6 +117,10 @@ void App(){
         else if(compare(input, "remove ")){
             if(compare(input, ".", 7)){
                 Remove();
+            }
+            else{
+                int rmline = stoi(input.substr(7, input.length()));
+                Remove(rmline);
             }
         }
 
