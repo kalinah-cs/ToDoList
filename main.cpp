@@ -1,17 +1,20 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <ctime>
 using namespace std;
 
 // The file where the tasks will be stored. You can change the name:
 const string ToDoFile = "db.txt";
 const string temp = "temp.txt";
+const string deadlines = "dead.txt";
 
 struct Task
 {
     string task;
     bool Progress;
     bool Priority;
+    time_t deadline;
     
     Task()
     {
@@ -110,9 +113,83 @@ void Sort(){
     file.close();
     tempf.close();
 }
+
+time_t Deadline(){
+    string input;
+    time_t timeRN, deadline;
+    size_t AddTime;
+    string litl;
+    int counter;
+    cout << endl;
+    fstream fileDL(deadlines, ios::app);
+    if(!fileDL.is_open()){
+        cout << "Error! Could not open file!";
+        return -1;
+    }
+    while(true){
+        cout << "When will the deadline be? ";
+        getline(cin, input);
+        timeRN = time(NULL);
+        if(input.find("hour") != string::npos){
+            AddTime = 60;
+            litl = input.substr(0, (input.find("hour") - 1));
+            counter = stoi(litl);
+            
+            deadline = timeRN + (counter * 60 * AddTime);
+            fileDL << ctime(&deadline);
+            return timeRN + (counter * 60 * AddTime);
+        }
+        else if(input.find("day") != string::npos){
+            AddTime = 1440;
+            litl = input.substr(0, input.find("day") - 1);
+            counter = stoi(litl);
+            
+            deadline = timeRN + (counter * 60 * AddTime);
+            fileDL << ctime(&deadline);
+            return timeRN + (counter * 60 * AddTime);
+        }
+        else if(input.find("week") != string::npos){
+            AddTime = 10080;
+            litl = input.substr(0, input.find("week") - 1);
+            counter = stoi(litl);
+            
+            deadline = timeRN + (counter * 60 * AddTime);
+            fileDL << ctime(&deadline);
+            return timeRN + (counter * 60 * AddTime);
+        }
+        else if(input.find("month") != string::npos){
+            AddTime = 43800;
+            litl = input.substr(0, input.find("month") - 1);
+            counter = stoi(litl);
+            
+            deadline = timeRN + (counter * 60 * AddTime);
+            fileDL << ctime(&deadline);
+            return timeRN + (counter * 60 * AddTime);
+        }
+        else if(input.find("year") != string::npos){
+            AddTime = 525600;
+            litl = input.substr(0, input.find("year") - 1);
+            counter = stoi(litl);
+            
+            deadline = timeRN + (counter * 60 * AddTime);
+            fileDL << ctime(&deadline);
+            return timeRN + (counter * 60 * AddTime);
+        }
+        else{
+            cout << "invalid, try again" << endl;
+        }
+    }
+}
 // adding a task
 void AddTask(Task &task, bool Priority = false)
 {
+    
+    task.deadline = Deadline();
+    time_t timeRN = time(NULL);
+    difftime(timeRN, task.deadline);
+
+    string timetest = ctime(&task.deadline);
+    timetest.erase(timetest.end() - 1);
     fstream rfile(ToDoFile, ios::in);
     fstream file(ToDoFile, ios::app);
     if (!file.is_open())
@@ -125,7 +202,7 @@ void AddTask(Task &task, bool Priority = false)
         cout << "ERROR!" << endl;
         return;
     }
-    // checkes which lines we're currently on
+    // checks which lines we're currently on
     string line;
     int currentline = 1;
     while (getline(rfile, line))
@@ -136,12 +213,14 @@ void AddTask(Task &task, bool Priority = false)
     if (task.Progress)
     {
         file << currentline << " ";
-        file << task.task << " Completed";
+        file << task.task << " Completed ";
+        file << timetest;
     }
     else
     {
         file << currentline << " ";
-        file << task.task << " Not done";
+        file << task.task << " Not done ";
+        file << timetest;
     }
     if(Priority){
         file << " Priority";
@@ -375,7 +454,6 @@ void Change(int numline, int stage, bool ToCompleted)
 void App()
 {
     string input;
-    
     while (true)
     {
         cout << "# ";
@@ -394,18 +472,20 @@ void App()
         // add
         else if (compare(input, "add"))
         {
+            Task task;
             string tsk;
             if (compare(input, "-c", 4))
             {
+                
                 if (compare(input, "-p", 7))
                 {
-                Task task;
+                
                 task.Progress = true;
                 task.task = input.substr(10, input.length());
                 AddTask(task, true);
                 }
                 else{
-                    Task task;
+                    
                     task.Progress = true;
                     task.task = input.substr(7, input.length());
                     AddTask(task);
@@ -414,14 +494,14 @@ void App()
             }
             else if (compare(input, "-p", 4))
             {
-                Task task;
+                
                 task.Progress = true;
                 task.task = input.substr(7, input.length());
                 AddTask(task, true);
             }
             else if ("add" != input)
             {
-                Task task;
+                
                 task.task = input.substr(4, input.length());
                 AddTask(task);
             }
