@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <ctime>
+#include <map>
 using namespace std;
 
 // The file where the tasks will be stored. You can change the name:
@@ -82,46 +83,31 @@ void Help(string func = "none")
     }
 }
 
-void Sort(){
-    fstream file, tempf;
-    file.open(ToDoFile, ios::in);
-    tempf.open(temp, ios::out);
 
-    string line;
-    while(getline(file, line)){
-        if(line.find("Priority") != string::npos){
-            tempf << line.substr(2, line.length()) << endl;
-        }
-    }
-    file.close();
-    file.open(ToDoFile, ios::in);
-    while(getline(file, line)){
-        if(line.find("Priority") == string::npos){
-            tempf << line.substr(2, line.length()) << endl;
-        }
-    }
-    file.close();
-    tempf.close();
-
-    file.open(ToDoFile, ios::out);
-    tempf.open(temp, ios::in);
-    int count = 1;
-    while(getline(tempf, line)){
-        file << count << " " << line << endl;
-        count++;
-    }
-    file.close();
-    tempf.close();
-}
-
-time_t Deadline(){
+time_t DeadlineMake(){
     string input;
     time_t timeRN, deadline;
     size_t AddTime;
+    const map<string, size_t> timeUnits = {
+        {"hour", 60},
+        {"day", 1440},
+        {"week", 10080},
+        {"month", 43800},
+        {"year", 525600}
+    };
     string litl;
     int counter;
     cout << endl;
-    fstream fileDL(deadlines, ios::app);
+    fstream fileDL;
+    fileDL.open(deadlines, ios::in);
+    string line;
+    int currentline = 1;
+    while (getline(fileDL, line))
+    {
+        currentline = currentline + 1;
+    }
+    fileDL.close();
+    fileDL.open(deadlines, ios::app);
     if(!fileDL.is_open()){
         cout << "Error! Could not open file!";
         return -1;
@@ -130,74 +116,114 @@ time_t Deadline(){
         cout << "When will the deadline be? ";
         getline(cin, input);
         timeRN = time(NULL);
-        if(input.find("hour") != string::npos){
-            AddTime = 60;
-            litl = input.substr(0, (input.find("hour") - 1));
-            counter = stoi(litl);
-            
-            deadline = timeRN + (counter * 60 * AddTime);
-            fileDL << ctime(&deadline);
-            return timeRN + (counter * 60 * AddTime);
-        }
-        else if(input.find("day") != string::npos){
-            AddTime = 1440;
-            litl = input.substr(0, input.find("day") - 1);
-            counter = stoi(litl);
-            
-            deadline = timeRN + (counter * 60 * AddTime);
-            fileDL << ctime(&deadline);
-            return timeRN + (counter * 60 * AddTime);
-        }
-        else if(input.find("week") != string::npos){
-            AddTime = 10080;
-            litl = input.substr(0, input.find("week") - 1);
-            counter = stoi(litl);
-            
-            deadline = timeRN + (counter * 60 * AddTime);
-            fileDL << ctime(&deadline);
-            return timeRN + (counter * 60 * AddTime);
-        }
-        else if(input.find("month") != string::npos){
-            AddTime = 43800;
-            litl = input.substr(0, input.find("month") - 1);
-            counter = stoi(litl);
-            
-            deadline = timeRN + (counter * 60 * AddTime);
-            fileDL << ctime(&deadline);
-            return timeRN + (counter * 60 * AddTime);
-        }
-        else if(input.find("year") != string::npos){
-            AddTime = 525600;
-            litl = input.substr(0, input.find("year") - 1);
-            counter = stoi(litl);
-            
-            deadline = timeRN + (counter * 60 * AddTime);
-            fileDL << ctime(&deadline);
-            return timeRN + (counter * 60 * AddTime);
-        }
-        else{
-            cout << "invalid, try again" << endl;
-        }
+
+        for(const auto& [unit, minutes] : timeUnits){
+            if(input.find(unit) != string::npos){
+                litl = input.substr(0, (input.find("hour") - 1));
+                counter = stoi(litl);
+
+                deadline = timeRN + (minutes * 60 * counter);
+                fileDL << currentline << " " << ctime(&deadline);
+                return deadline;
+            }
+    }
     }
 }
+
+string DeadlineTime(time_t deadline){
+    time_t timeRN = time(NULL);
+    difftime(deadline, timeRN);
+    const map<string, size_t> TimeUnits = {
+        
+    };
+
+}
+
+string DeadlineAdder(int numline){
+    fstream fileDL(deadlines, ios::in);
+    if(!fileDL.is_open()){
+        cout << "Error!";
+        return "Error!";
+    }
+    string line;
+    int curline = 1;
+    while(getline(fileDL, line)){
+        if(curline == numline){
+
+        }
+        curline++;
+    }
+    time_t timeRN = time(NULL);
+    
+}
+
+void Sort(){
+    fstream file, tempf, deadl;
+    file.open(ToDoFile, ios::in);
+    deadl.open(deadlines, ios::in);
+    tempf.open(temp, ios::out);
+
+    string line, line2;
+    while(getline(file, line) && getline(deadl, line2)){
+        if(line.find("Priority") != string::npos){
+            tempf << line.substr(2, line.length()) << endl;
+            tempf << line2.substr(2, line2.length()) << endl;
+        }
+    }
+    file.close();
+    deadl.close();
+    file.open(ToDoFile, ios::in);
+    deadl.open(deadlines, ios::in);
+    while(getline(file, line) && getline(deadl, line2)){
+        if(line.find("Priority") == string::npos){
+            tempf << line.substr(2, line.length()) << endl;
+            tempf << line2.substr(2, line2.length()) << endl;
+        }
+    }
+    file.close();
+    deadl.close();
+    tempf.close();
+
+    file.open(ToDoFile, ios::out);
+    deadl.open(deadlines, ios::out);
+    tempf.open(temp, ios::in);
+    int count = 1;
+    int count1 = 1, count2 = 1;
+    while(getline(tempf, line)){
+        if(count % 2 == 0){
+            deadl << count2 << " " << line << endl;
+            count2++;
+        }
+        if(count % 2 == 1){
+            file << count1 << " " << line << endl;
+            count1++;
+        }
+        count++;
+    }
+    file.close();
+    tempf.close();
+    
+}
+
 // adding a task
 void AddTask(Task &task, bool Priority = false)
 {
     
-    task.deadline = Deadline();
-    time_t timeRN = time(NULL);
-    difftime(timeRN, task.deadline);
+    // task.deadline = DeadlineMake();
+    // time_t timeRN = time(NULL);
+    // difftime(timeRN, task.deadline);
 
-    string timetest = ctime(&task.deadline);
-    timetest.erase(timetest.end() - 1);
-    fstream rfile(ToDoFile, ios::in);
-    fstream file(ToDoFile, ios::app);
+    // string timetest = ctime(&task.deadline);
+    // timetest.erase(timetest.end() - 1);
+    DeadlineMake();
+    fstream file;
+    file.open(ToDoFile, ios::in);
     if (!file.is_open())
     {
         cout << "ERROR!" << endl;
         return;
     }
-    if (!rfile.is_open())
+    if (!file.is_open())
     {
         cout << "ERROR!" << endl;
         return;
@@ -205,22 +231,22 @@ void AddTask(Task &task, bool Priority = false)
     // checks which lines we're currently on
     string line;
     int currentline = 1;
-    while (getline(rfile, line))
+    while (getline(file, line))
     {
         currentline = currentline + 1;
     }
 
+    file.close();
+    file.open(ToDoFile, ios::app);
     if (task.Progress)
     {
         file << currentline << " ";
         file << task.task << " Completed ";
-        file << timetest;
     }
     else
     {
         file << currentline << " ";
         file << task.task << " Not done ";
-        file << timetest;
     }
     if(Priority){
         file << " Priority";
@@ -261,7 +287,15 @@ void Remove(int line = -1)
     // rm everything
     if (line == -1)
     {
-        ofstream file(ToDoFile);
+        ofstream file;
+        file.open(ToDoFile);
+        if (!file.is_open())
+        {
+            cout << "ERROR!" << endl;
+            return;
+        }
+        file.close();
+        file.open(deadlines);
         if (!file.is_open())
         {
             cout << "ERROR!" << endl;
@@ -303,6 +337,43 @@ void Remove(int line = -1)
         // replaces the mainFile's tasks with the temp one
         tempf.open(temp, ios::in);
         file1.open(ToDoFile, ios::out);
+        curline = 1;
+        while (getline(tempf, linestr))
+        {
+            file1 << curline << " " << linestr << endl;
+            curline++;
+        }
+        file1.close();
+        tempf.close();
+        //now for the deadlines, just a complete copy-paste from what you see up there ^
+        //just maybe making this with classes would of been better
+        file1.open(deadlines, ios::in);
+        tempf.open(temp, ios::out);
+        curline = 1; // current line
+        if (!file1.is_open())
+        {
+            cout << "ERROR!" << endl;
+            return;
+        }
+        if (!tempf.is_open())
+        {
+            cout << "ERROR!" << endl;
+            return;
+        }
+
+        while (getline(file1, linestr))
+        {
+            if (line != curline)
+            {
+                tempf << linestr.substr(0, linestr.length()) << endl;
+            }
+            curline++;
+        }
+        tempf.close();
+        file1.close();
+        // replaces the deadline's tasks with the temp one
+        tempf.open(temp, ios::in);
+        file1.open(deadlines, ios::out);
         curline = 1;
         while (getline(tempf, linestr))
         {
@@ -413,20 +484,21 @@ void Change(int numline, int stage, bool ToCompleted)
         {
             if(stage == 1){ // progress
                 if (ToCompleted){
-                    tempf << line.replace(line.find("Not done"), line.length(), "Completed") << endl;
+                    tempf << line.replace(line.find("Not done"), 8, "Completed");
                 }
                 else{
-                    tempf << line.replace(line.find("Completed"), line.length(), "Not done") << endl;
+                    tempf << line.replace(line.find("Completed"), 9, "Not done");
                 }
             }
             if(stage == 2){ // priority 
                 if (ToCompleted){
-                    tempf << line << " Priority" << endl;
+                    tempf << line << " Priority";
                 }
                 else{
-                    tempf << line.replace(line.find("Priority"), line.length(), "") << endl;
+                    tempf << line.replace(line.find("Priority"), 8, "");
                 }
             }
+            tempf << endl;
         }
         else
         {
