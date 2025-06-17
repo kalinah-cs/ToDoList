@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <ctime>
-#include <map>
+#include <unordered_map>
 using namespace std;
 
 // The file where the tasks will be stored. You can change the name:
@@ -40,6 +40,10 @@ bool compare(string str1, string str2, int start = 0)
 
 void Help(string func = "none")
 {
+    if(func == "none"){
+        cout << "A simple To Do list. You can add tasks, change them or remove them";
+        cout << endl;
+    }
     if (func == "add" || func == "none")
     {
         cout << "  > add - adds a task" << endl;
@@ -50,7 +54,7 @@ void Help(string func = "none")
     {
         cout << "  > remove - removes a task" << endl;
         cout << "    . - removes everything" << endl;
-        cout << "    -n - the line number" << endl;
+        cout << "    -l - the line number" << endl;
         cout << "    -w - the first task with that word" << endl;
         cout << "    -c - completed tasks" << endl;
         cout << "    -p - priority tasks" << endl;
@@ -73,6 +77,12 @@ void Help(string func = "none")
         cout << "      -p - changes the task from nonpriority to priority" << endl;
         cout << "      -np - changes the task from priority to nonpriority" << endl;
     }
+    if (func == "time" || func == "none")
+    {
+        cout << "  > time - shows how much time is left" << endl;
+        cout << "    -l - the line number" << endl;
+        cout << "    -w - the first task with that word" << endl;
+    }
     if (func == "find" || func == "none")
     {
         cout << "  > find [word] - finds the first task with that word" << endl;
@@ -88,7 +98,7 @@ time_t DeadlineMake(){
     string input;
     time_t timeRN, deadline;
     size_t AddTime;
-    const map<string, size_t> timeUnits = {
+    const unordered_map<string, size_t> timeUnits = {
         {"hour", 60},
         {"day", 1440},
         {"week", 10080},
@@ -123,38 +133,58 @@ time_t DeadlineMake(){
                 counter = stoi(litl);
 
                 deadline = timeRN + (minutes * 60 * counter);
-                fileDL << currentline << " " << ctime(&deadline);
+                fileDL << currentline << " " << deadline;
                 return deadline;
             }
     }
     }
 }
 
-string DeadlineTime(time_t deadline){
+void DeadlineTime(time_t deadline){
     time_t timeRN = time(NULL);
-    difftime(deadline, timeRN);
-    const map<string, size_t> TimeUnits = {
-        
+    double difference = difftime(deadline, timeRN);
+    const unordered_map<string, size_t> TimeUnits = {
+        {"minute", 60},
+        {"hour", 3600},
+        {"day", 86400},
+        {"week", 604800},
+        {"month", 2629800},
+        {"year", 31557600}
     };
-
+    
+    // Calculate time units
+    for(const auto& [units, minutes] : TimeUnits){
+        int i = 0;
+        while(difference >= minutes){
+            i++;
+            difference -= minutes;
+        }
+        if(i != 0){
+            cout << i << " " << units;
+            if(i > 1){
+                cout << "s";
+            }
+            cout << " ";
+        }
+    }
+    cout << "left" << endl;
 }
 
-string DeadlineAdder(int numline){
-    fstream fileDL(deadlines, ios::in);
+//shows the deadline when typing time
+void DeadlineFunc(int numline){
+    fstream fileDL;
+    fileDL.open(deadlines, ios::in);
     if(!fileDL.is_open()){
         cout << "Error!";
-        return "Error!";
     }
+    int currline = 1;
     string line;
-    int curline = 1;
     while(getline(fileDL, line)){
-        if(curline == numline){
-
+        if(currline == numline){
+            DeadlineTime(stod(line.substr(2, line.length())));
         }
-        curline++;
+        currline++;
     }
-    time_t timeRN = time(NULL);
-    
 }
 
 void Sort(){
@@ -208,13 +238,6 @@ void Sort(){
 // adding a task
 void AddTask(Task &task, bool Priority = false)
 {
-    
-    // task.deadline = DeadlineMake();
-    // time_t timeRN = time(NULL);
-    // difftime(timeRN, task.deadline);
-
-    // string timetest = ctime(&task.deadline);
-    // timetest.erase(timetest.end() - 1);
     DeadlineMake();
     fstream file;
     file.open(ToDoFile, ios::in);
@@ -385,8 +408,8 @@ void Remove(int line = -1)
     }
 }
 
-// Just shows whats currently in the database text/todolist/
-// The stages -> 0 - shows every task, 1 - shows only the completed tasks, 2 - shows only the incompleted tasks
+// Just shows whats currently in the database text/todolist
+// The stages -> 0 - shows every task, 1 - shows only the completed tasks, 2 - shows only the incompleted tasks, 3 - priority, 4 - nonpriority
 void View(int stage = 0)
 {
     fstream rfile(ToDoFile, ios::in);
@@ -439,7 +462,7 @@ void View(int stage = 0)
         cout << "----------------------------------------" << endl;
     }
     else if (stage == 4)
-    { // priority
+    { // nonpriority
         while (getline(rfile, line))
         {
             if (line.find("Priority") == string::npos)
@@ -590,7 +613,7 @@ void App()
                 Remove();
             }
             else if (compare(input, " -w", 6))
-            {
+            { //first task with that word
                 string word = input.substr(10, input.length());
                 Remove(Find(word));
             }
@@ -599,6 +622,7 @@ void App()
                 int rmline = stoi(input.substr(10, input.length()));
                 Remove(rmline);
             }
+            // completed/noncompleted
             else if (compare(input, " -c", 6))
             {
                 while(Find("Completed") != -1){
@@ -611,6 +635,7 @@ void App()
                     Remove(Find("Not done"));
                 }
             }
+            //priority
             else if (compare(input, " -p", 6))
             {
                 while(Find("Priority") != -1){
@@ -704,6 +729,22 @@ void App()
             else
             {
                 Help("change");
+            }
+        }
+        // shows how much time there is left
+        else if (compare(input, "time")){
+            if (compare(input, " -w", 4))
+            { //first task with that word
+                string word = input.substr(8, input.length());
+                DeadlineFunc(Find(word));
+            }
+            else if (compare(input, " -l", 4))
+            { // specific line
+                int rmline = stoi(input.substr(8, input.length()));
+                DeadlineFunc(rmline);
+            }
+            else{
+                Help("time");
             }
         }
         Sort();
